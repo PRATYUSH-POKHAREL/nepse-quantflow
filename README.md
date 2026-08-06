@@ -103,6 +103,7 @@ DP Charge	NPR 25 flat
 This project attempts Yahoo Finance for NEPSE data. Where unavailable, it uses synthetic simulated data for demonstration. This is NOT real market data. Do NOT trade with it.
 
 📁 Project Structure
+
 text
 nepse-quantflow/
 ├── app.py                  # Main Flask server
@@ -118,23 +119,19 @@ nepse-quantflow/
 ├── templates/              # HTML pages
 ├── static/                 # CSS & JS
 └── requirements.txt        # Dependencies
+
 🔮 Future Plans
 Real NEPSE data via API
-
 Paper trading with live prices
-
 More technical indicators
-
 Dark mode
-
 Mobile app
 
 👤 Author
 Pratyush Pokharel
-
 CSE Data Science, Chandigarh University
-
 GitHub: @PRATYUSH-POKHAREL
+Live Demo: nepse-quantflow.onrender.com
 
 📝 License
 Personal educational project. Learn from it, but don't use it commercially without permission. Attribution appreciated.
