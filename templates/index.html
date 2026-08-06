@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantFlow | Backtesting Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #030712;
+            --surface: rgba(17, 24, 39, 0.8);
+            --surface-border: rgba(255, 255, 255, 0.06);
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #818cf8;
+            --accent-glow: rgba(129, 140, 248, 0.3);
+            --green: #34d399;
+            --red: #f87171;
+            --amber: #fbbf24;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -40%;
+            left: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            right: -20%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 40px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .logo-text span {
+            color: var(--accent);
+        }
+        .nav-badge {
+            background: rgba(129, 140, 248, 0.12);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+        .hero .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 550px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Controls */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+        .field label {
+            display: block;
+            font-size: 0.73rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .field select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        .field select option {
+            background: #1e293b;
+            color: #f1f5f9;
+        }
+
+        /* Button */
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #818cf8, #6366f1);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: wait;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Metrics */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+        .metric-card:nth-child(1)::before { background: var(--accent); }
+        .metric-card:nth-child(2)::before { background: #a78bfa; }
+        .metric-card:nth-child(3)::before { background: var(--red); }
+        .metric-card:nth-child(4)::before { background: var(--amber); }
+        .metric-card:nth-child(5)::before { background: var(--green); }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 4px;
+        }
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .text-up { color: var(--green); }
+        .text-down { color: var(--red); }
+
+        /* Chart */
+        .chart-container {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            margin-bottom: 20px;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+        }
+
+        /* Table */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        .table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-wrap th {
+            text-align: left;
+            padding: 12px 20px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+        .table-wrap td {
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.88rem;
+        }
+        .table-wrap tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-buy {
+            background: rgba(52, 211, 153, 0.12);
+            color: var(--green);
+        }
+        .badge-sell {
+            background: rgba(248, 113, 113, 0.12);
+            color: var(--red);
+        }
+
+        /* Loading */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        #loading-overlay.active {
+            display: flex;
+        }
+        .loader {
+            text-align: center;
+        }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(129, 140, 248, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        #results { display: none; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px 0 10px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+        footer strong { color: var(--text); }
+
+        /* Pulse animation for live indicator */
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .controls-grid { grid-template-columns: 1fr 1fr; }
+            .metrics { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="loader">
+            <div class="loader-ring"></div>
+            <p>Simulating trades with real Indian market costs...</p>
+        </div>
+    </div>
+
+    <div class="app">
+        <!-- Navigation -->
+        <nav>
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <div class="logo-text">Quant<span>Flow</span></div>
+            </div>
+            <div class="nav-badge">
+                <span class="pulse"></span> Event-Driven Engine
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <div class="hero">
+            <h1>Backtest Your <span class="gradient-text">Trading Ideas</span></h1>
+            <p>Simulate strategies on real Indian market data with accurate brokerage, STT, stamp duty, and slippage modeling.</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="card">
+            <div class="controls-grid">
+                <div class="field">
+                    <label>Stock</label>
+                    <select id="symbol">
+                        <option value="INFY.NS">Infosys</option>
+                        <option value="TCS.NS">TCS</option>
+                        <option value="RELIANCE.NS">Reliance</option>
+                        <option value="HDFCBANK.NS">HDFC Bank</option>
+                        <option value="SBIN.NS">State Bank of India</option>
+                        <option value="^NSEI">Nifty 50 Index</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Start Date</label>
+                    <input type="date" id="start_date" value="2022-01-01">
+                </div>
+                <div class="field">
+                    <label>End Date</label>
+                    <input type="date" id="end_date" value="2024-12-31">
+                </div>
+                <div class="field">
+                    <label>Capital (₹)</label>
+                    <input type="number" id="capital" value="100000">
+                </div>
+                <div class="field">
+                    <label>Fast MA</label>
+                    <input type="number" id="fast_ma" value="20">
+                </div>
+                <div class="field">
+                    <label>Slow MA</label>
+                    <input type="number" id="slow_ma" value="50">
+                </div>
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" id="runBtn" onclick="runBacktest()">
+                        ⚡ Run Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results">
+            <!-- Metrics -->
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="mReturn">--</div>
+                    <div class="metric-label">Total Return</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="mSharpe">--</div>
+                    <div class="metric-label">Sharpe Ratio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value text-down" id="mDrawdown">--</div>
+                    <div class="metric-label">Max Drawdown</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="mWinRate">--</div>
+                    <div class="metric-label">Win Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="mTrades">--</div>
+                    <div class="metric-label">Total Trades</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <canvas id="equityChart"></canvas>
+            </div>
+
+            <!-- Trade Log -->
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Action</th><th>Quantity</th><th>Price (₹)</th></tr>
+                    </thead>
+                    <tbody id="tradeBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            Built with precision by <strong>Pratyush Pokharel</strong> — Chandigarh University, CSE Data Science
+        </footer>
+    </div>
+
+    <script>
+        let chart = null;
+
+        async function runBacktest() {
+            const overlay = document.getElementById('loading-overlay');
+            const btn = document.getElementById('runBtn');
+            const results = document.getElementById('results');
+
+            overlay.classList.add('active');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Running...';
+            results.style.display = 'none';
+
+            const payload = {
+                symbol: document.getElementById('symbol').value,
+                start_date: document.getElementById('start_date').value,
+                end_date: document.getElementById('end_date').value,
+                capital: document.getElementById('capital').value,
+                fast_ma: document.getElementById('fast_ma').value,
+                slow_ma: document.getElementById('slow_ma').value
+            };
+
+            try {
+                const resp = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await resp.json();
+
+                if (!json.ok) {
+                    alert('Backtest failed: ' + json.error);
+                    return;
+                }
+
+                render(json.data);
+                results.style.display = 'block';
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (err) {
+                alert('Cannot connect to server. Is app.py running on port 8080?');
+            } finally {
+                overlay.classList.remove('active');
+                btn.disabled = false;
+                btn.innerHTML = '⚡ Run Analysis';
+            }
+        }
+
+        function render(d) {
+            // Metrics
+            const retEl = document.getElementById('mReturn');
+            retEl.textContent = d.total_return >= 0 ? '+' + d.total_return.toFixed(2) + '%' : d.total_return.toFixed(2) + '%';
+            retEl.className = 'metric-value ' + (d.total_return >= 0 ? 'text-up' : 'text-down');
+
+            document.getElementById('mSharpe').textContent = d.sharpe_ratio.toFixed(2);
+            document.getElementById('mDrawdown').textContent = d.max_drawdown.toFixed(2) + '%';
+            document.getElementById('mWinRate').textContent = d.win_rate.toFixed(1) + '%';
+            document.getElementById('mTrades').textContent = d.total_trades;
+
+            // Chart
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            if (chart) chart.destroy();
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(129, 140, 248, 0.25)');
+            gradient.addColorStop(1, 'rgba(129, 140, 248, 0.0)');
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: d.equity_curve.map(p => p.date),
+                    datasets: [
+                        {
+                            label: 'Portfolio Equity',
+                            data: d.equity_curve.map(p => p.equity),
+                            borderColor: '#818cf8',
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2.5
+                        },
+                        {
+                            label: 'Initial Capital',
+                            data: d.equity_curve.map(() => d.initial_capital),
+                            borderColor: '#475569',
+                            borderDash: [8, 5],
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 25,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17,24,39,0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(129,140,248,0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 11 } },
+                            grid: { color: 'rgba(255,255,255,0.03)' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#64748b',
+                                callback: v => '₹' + v.toLocaleString(),
+                                font: { size: 11 }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.03)' }
+                        }
+                    }
+                }
+            });
+
+            // Trades table
+            document.getElementById('tradeBody').innerHTML = d.trades.map(t =>
+                `<tr>
+                    <td>${t.date}</td>
+                    <td><span class="badge badge-${t.action.toLowerCase()}">${t.action}</span></td>
+                    <td>${t.shares}</td>
+                    <td>₹${t.price.toLocaleString()}</td>
+                </tr>`
+            ).join('');
+        }
+    </script>
+</body>
+</html>

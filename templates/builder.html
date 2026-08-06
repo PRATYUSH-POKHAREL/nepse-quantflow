@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Builder | NEPSE QuantFlow</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 6px; align-items: center; overflow-x: auto; }
+        .topbar .nav-links a {
+            padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s; white-space: nowrap;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        .topbar .user-info img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 800; }
+        .page-header p { color: #64748b; font-size: 0.9rem; }
+        
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+        
+        .builder-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .condition-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+        .condition-block h4 { font-size: 0.9rem; margin-bottom: 10px; color: #475569; }
+        .condition-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .condition-row select, .condition-row input {
+            padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+            font-family: inherit; font-size: 0.83rem; background: #fff;
+        }
+        .condition-row select { min-width: 130px; }
+        .condition-row input { width: 80px; }
+        
+        .btn {
+            padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; font-family: inherit; border: none; transition: all 0.2s;
+        }
+        .btn-primary { background: #dc2626; color: #fff; width: 100%; }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+        .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+        .btn-add { background: #f0fdf4; color: #059669; border: 1px solid #bbf7d0; }
+        .btn-remove { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        
+        .logic-toggle { display: flex; gap: 0; margin-bottom: 10px; }
+        .logic-toggle button {
+            padding: 6px 16px; border: 1.5px solid #e2e8f0; background: #fff;
+            cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: 600;
+        }
+        .logic-toggle button:first-child { border-radius: 8px 0 0 8px; }
+        .logic-toggle button:last-child { border-radius: 0 8px 8px 0; }
+        .logic-toggle button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+        
+        .field { margin-bottom: 12px; }
+        .field label { display: block; font-size: 0.73rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .field input, .field select {
+            width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; background: #f8fafc;
+        }
+        
+        .preset-btn {
+            padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+            background: #fff; cursor: pointer; font-family: inherit; font-size: 0.8rem;
+            margin: 4px; transition: all 0.2s;
+        }
+        .preset-btn:hover { border-color: #dc2626; color: #dc2626; }
+        
+        #loader {
+            display: none; position: fixed; inset: 0; background: rgba(248,250,252,0.8);
+            z-index: 99; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        #loader.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #dc2626; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; font-size: 0.85rem; color: #1e40af; }
+        
+        @media (max-width: 768px) {
+            .builder-layout { grid-template-columns: 1fr; }
+            .topbar .nav-links a { padding: 6px 8px; font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div style="text-align:center;"><div class="spinner"></div><p style="margin-top:12px;color:#64748b;">Testing custom strategy...</p></div></div>
+
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer">⚡ Optimizer</a>
+            <a href="/walkforward">🔮 Walk-Forward</a>
+            <a href="/builder" class="active">🧩 Builder</a>
+            <a href="/portfolio">💼 Portfolio</a>
+            <a href="/alerts">🔔 Alerts</a>
+            <a href="/learn">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>🧩 Strategy Builder</h1>
+            <p>Build custom trading strategies without writing code. Define entry and exit conditions using indicators.</p>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 How it works:</strong> Add conditions for when to BUY (entry) and when to SELL (exit). Use AND logic for all conditions to be true, or OR logic for any condition. Click <strong>Test Strategy</strong> to see results.
+        </div>
+
+        <!-- Presets -->
+        <div class="card">
+            <h4 style="margin-bottom:10px;">Quick Presets</h4>
+            <button class="preset-btn" onclick="loadPreset('ma_crossover')">MA Crossover</button>
+            <button class="preset-btn" onclick="loadPreset('rsi_oversold')">RSI Oversold</button>
+            <button class="preset-btn" onclick="loadPreset('bollinger')">Bollinger Bands</button>
+            <button class="preset-btn" onclick="loadPreset('volume_breakout')">Volume Breakout</button>
+        </div>
+
+        <div class="builder-layout">
+            <!-- Builder -->
+            <div>
+                <div class="card">
+                    <h3 style="margin-bottom:14px;">Entry Conditions (BUY)</h3>
+                    <div class="logic-toggle">
+                        <button class="active" onclick="setLogic('entry','AND',this)">AND</button>
+                        <button onclick="setLogic('entry','OR',this)">OR</button>
+                    </div>
+                    <div id="entryConditions"></div>
+                    <button class="btn btn-add btn-sm" onclick="addCondition('entry')">+ Add Condition</button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom:14px;">Exit Conditions (SELL)</h3>
+                    <div class="logic-toggle">
+                        <button class="active" onclick="setLogic('exit','AND',this)">AND</button>
+                        <button onclick="setLogic('exit','OR',this)">OR</button>
+                    </div>
+                    <div id="exitConditions"></div>
+                    <button class="btn btn-add btn-sm" onclick="addCondition('exit')">+ Add Condition</button>
+                </div>
+            </div>
+
+            <!-- Config & Test -->
+            <div>
+                <div class="card">
+                    <div class="field"><label>Strategy Name</label><input type="text" id="strategyName" value="My Custom Strategy"></div>
+                    <div class="field"><label>Stock</label>
+                        <select id="builderSymbol">{% for s in stocks %}<option value="{{ s.symbol }}">{{ s.symbol }}</option>{% endfor %}</select>
+                    </div>
+                    <div class="field"><label>Start Date</label><input type="date" id="builderStart" value="2020-01-01"></div>
+                    <div class="field"><label>End Date</label><input type="date" id="builderEnd" value="2026-07-16"></div>
+                    <div class="field"><label>Capital (NPR)</label><input type="number" id="builderCapital" value="100000"></div>
+                    <button class="btn btn-primary" onclick="testStrategy()">🚀 Test Strategy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let entryLogic = 'AND';
+        let exitLogic = 'AND';
+
+        const indicators = [
+            { value: 'close', label: 'Close Price' },
+            { value: 'ma', label: 'Moving Average' },
+            { value: 'rsi', label: 'RSI' },
+            { value: 'volume', label: 'Volume' },
+            { value: 'bb_lower', label: 'Bollinger Lower Band' },
+            { value: 'bb_upper', label: 'Bollinger Upper Band' },
+        ];
+
+        const operators = [
+            { value: '>', label: '>' },
+            { value: '<', label: '<' },
+            { value: '>=', label: '>=' },
+            { value: '<=', label: '<=' },
+            { value: '==', label: '==' },
+            { value: 'crosses_above', label: 'Crosses Above' },
+            { value: 'crosses_below', label: 'Crosses Below' },
+        ];
+
+        function createConditionRow(type) {
+            return `
+                <div class="condition-row">
+                    <select>${indicators.map(i => `<option value="${i.value}">${i.label}</option>`).join('')}</select>
+                    <select>${operators.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}</select>
+                    <input type="number" placeholder="Value" value="50" step="0.1">
+                    <input type="number" placeholder="Period" value="14" style="width:60px;" min="2" max="200">
+                    <button class="btn btn-remove btn-sm" onclick="this.parentElement.remove()">✕</button>
+                </div>
+            `;
+        }
+
+        function addCondition(type) {
+            document.getElementById(type + 'Conditions').insertAdjacentHTML('beforeend', createConditionRow(type));
+        }
+
+        function setLogic(type, value, btn) {
+            if (type === 'entry') entryLogic = value;
+            else exitLogic = value;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function getConditions(type) {
+            const rows = document.querySelectorAll(`#${type}Conditions .condition-row`);
+            const conditions = [];
+            rows.forEach(row => {
+                const selects = row.querySelectorAll('select');
+                const inputs = row.querySelectorAll('input');
+                conditions.push({
+                    indicator: selects[0].value,
+                    operator: selects[1].value,
+                    value: parseFloat(inputs[0].value) || 50,
+                    period: parseInt(inputs[1].value) || 14
+                });
+            });
+            return conditions;
+        }
+
+        function loadPreset(preset) {
+            document.getElementById('entryConditions').innerHTML = '';
+            document.getElementById('exitConditions').innerHTML = '';
+            
+            const presets = {
+                ma_crossover: {
+                    name: 'MA Crossover',
+                    entry: [{ indicator: 'ma', operator: 'crosses_above', value: 50, period: 20 }],
+                    exit: [{ indicator: 'ma', operator: 'crosses_below', value: 50, period: 20 }]
+                },
+                rsi_oversold: {
+                    name: 'RSI Oversold/Overbought',
+                    entry: [{ indicator: 'rsi', operator: '<', value: 35, period: 14 }],
+                    exit: [{ indicator: 'rsi', operator: '>', value: 65, period: 14 }]
+                },
+                bollinger: {
+                    name: 'Bollinger Bands',
+                    entry: [{ indicator: 'close', operator: '<=', value: 0, period: 20 }],
+                    exit: [{ indicator: 'close', operator: '>=', value: 0, period: 20 }]
+                },
+                volume_breakout: {
+                    name: 'Volume Breakout',
+                    entry: [{ indicator: 'volume', operator: '>', value: 50000, period: 20 }, { indicator: 'close', operator: '>', value: 0, period: 20 }],
+                    exit: [{ indicator: 'close', operator: '<', value: 0, period: 20 }]
+                }
+            };
+            
+            const p = presets[preset];
+            document.getElementById('strategyName').value = p.name;
+            
+            p.entry.forEach(c => {
+                document.getElementById('entryConditions').insertAdjacentHTML('beforeend', createConditionRow('entry'));
+                const row = document.getElementById('entryConditions').lastElementChild;
+                row.querySelectorAll('select')[0].value = c.indicator;
+                row.querySelectorAll('select')[1].value = c.operator;
+                row.querySelectorAll('input')[0].value = c.value;
+                row.querySelectorAll('input')[1].value = c.period;
+            });
+            
+            p.exit.forEach(c => {
+                document.getElementById('exitConditions').insertAdjacentHTML('beforeend', createConditionRow('exit'));
+                const row = document.getElementById('exitConditions').lastElementChild;
+                row.querySelectorAll('select')[0].value = c.indicator;
+                row.querySelectorAll('select')[1].value = c.operator;
+                row.querySelectorAll('input')[0].value = c.value;
+                row.querySelectorAll('input')[1].value = c.period;
+            });
+        }
+
+        async function testStrategy() {
+            document.getElementById('loader').classList.add('active');
+            
+            const strategy = {
+                name: document.getElementById('strategyName').value,
+                entry_conditions: getConditions('entry'),
+                exit_conditions: getConditions('exit'),
+                entry_logic: entryLogic,
+                exit_logic: exitLogic
+            };
+            
+            if (strategy.entry_conditions.length === 0 && strategy.exit_conditions.length === 0) {
+                alert('Add at least one condition.');
+                document.getElementById('loader').classList.remove('active');
+                return;
+            }
+            
+            try {
+                const resp = await fetch('/api/builder/test', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        strategy, symbol: document.getElementById('builderSymbol').value,
+                        start_date: document.getElementById('builderStart').value,
+                        end_date: document.getElementById('builderEnd').value,
+                        capital: document.getElementById('builderCapital').value
+                    })
+                });
+                const json = await resp.json();
+                if (!json.ok) { alert(json.error); return; }
+                
+                alert(`✅ Strategy: ${json.data.strategy_name}\nReturn: ${json.data.total_return}%\nSharpe: ${json.data.sharpe_ratio}\nTrades: ${json.data.total_trades}\nWin Rate: ${json.data.win_rate}%\n\nFull results available on Backtest page.`);
+            } catch(e) { alert('Error: ' + e.message); }
+            finally { document.getElementById('loader').classList.remove('active'); }
+        }
+
+        // Start with one condition each
+        addCondition('entry');
+        addCondition('exit');
+    </script>
+</body>
+</html>

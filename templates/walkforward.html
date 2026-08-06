@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walk-Forward | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 6px; align-items: center; overflow-x: auto; }
+        .topbar .nav-links a {
+            padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s; white-space: nowrap;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        .topbar .user-info img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 800; }
+        .page-header p { color: #64748b; font-size: 0.9rem; }
+        
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+        
+        .controls {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px; align-items: end;
+        }
+        .field label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 5px; }
+        .field input, .field select {
+            width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-family: inherit; font-size: 0.88rem; background: #f8fafc;
+        }
+        
+        .btn {
+            padding: 11px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; font-family: inherit; border: none; transition: all 0.2s;
+        }
+        .btn-primary { background: #dc2626; color: #fff; width: 100%; }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+        
+        .verdict-box {
+            padding: 20px 24px; border-radius: 14px; margin-bottom: 20px; font-weight: 600; font-size: 1rem;
+        }
+        .verdict-reliable { background: #f0fdf4; border: 2px solid #10b981; color: #065f46; }
+        .verdict-unreliable { background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 14px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        tr:hover td { background: #f8fafc; }
+        
+        .up { color: #10b981; font-weight: 600; }
+        .down { color: #ef4444; font-weight: 600; }
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+        .badge-pass { background: #ecfdf5; color: #059669; }
+        .badge-fail { background: #fef2f2; color: #dc2626; }
+        
+        #loader {
+            display: none; position: fixed; inset: 0; background: rgba(248,250,252,0.8);
+            z-index: 99; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        #loader.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #dc2626; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+        .info-box h4 { font-size: 0.95rem; color: #1e40af; margin-bottom: 6px; }
+        .info-box p { font-size: 0.85rem; color: #3b82f6; line-height: 1.6; }
+        
+        #results { display: none; }
+        
+        @media (max-width: 768px) {
+            .topbar .nav-links a { padding: 6px 8px; font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div style="text-align:center;"><div class="spinner"></div><p style="margin-top:12px;color:#64748b;">Running walk-forward analysis...</p></div></div>
+
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer">⚡ Optimizer</a>
+            <a href="/walkforward" class="active">🔮 Walk-Forward</a>
+            <a href="/builder">🧩 Builder</a>
+            <a href="/portfolio">💼 Portfolio</a>
+            <a href="/alerts">🔔 Alerts</a>
+            <a href="/learn">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>🔮 Walk-Forward Optimization</h1>
+            <p>Test if your strategy is truly robust or overfitted to past data. Uses rolling training/testing windows.</p>
+        </div>
+
+        <div class="info-box">
+            <h4>How Walk-Forward Works</h4>
+            <p>The data is split into rolling windows. Each window has a <strong>training period</strong> (in-sample) and a <strong>testing period</strong> (out-of-sample). If a strategy performs well in out-of-sample windows, it's more likely to be robust and not overfit.</p>
+        </div>
+
+        <div class="card">
+            <div class="controls">
+                <div class="field"><label>Stock</label><select id="symbol">{% for s in stocks %}<option value="{{ s.symbol }}">{{ s.symbol }}</option>{% endfor %}</select></div>
+                <div class="field"><label>Strategy</label>
+                    <select id="strategy">
+                        <option value="ma_crossover">MA Crossover</option>
+                        <option value="rsi">RSI</option>
+                        <option value="bollinger">Bollinger Bands</option>
+                    </select>
+                </div>
+                <div class="field"><label>Start</label><input type="date" id="start_date" value="2020-01-01"></div>
+                <div class="field"><label>End</label><input type="date" id="end_date" value="2026-07-16"></div>
+                <div class="field"><label>Capital (NPR)</label><input type="number" id="capital" value="100000"></div>
+                <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="run()">🔮 Run Analysis</button></div>
+            </div>
+        </div>
+
+        <div id="results">
+            <div id="verdict"></div>
+            <div class="card">
+                <h3 style="margin-bottom:14px;">📊 Window-by-Window Results</h3>
+                <div style="overflow-x:auto;">
+                    <table><thead><tr><th>Window</th><th>Training Period</th><th>Testing Period</th><th>Train Return</th><th>Test Return</th><th>Train Sharpe</th><th>Test Sharpe</th><th>Result</th></tr></thead>
+                    <tbody id="windowBody"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function run() {
+            document.getElementById('loader').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/walkforward', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        symbol: document.getElementById('symbol').value,
+                        strategy: document.getElementById('strategy').value,
+                        start_date: document.getElementById('start_date').value,
+                        end_date: document.getElementById('end_date').value,
+                        capital: document.getElementById('capital').value
+                    })
+                });
+                const json = await resp.json();
+                if (!json.ok) { alert(json.error); return; }
+                
+                const d = json.data;
+                
+                // Verdict
+                document.getElementById('verdict').innerHTML = `
+                    <div class="verdict-box ${d.verdict === 'RELIABLE' ? 'verdict-reliable' : 'verdict-unreliable'}">
+                        ${d.verdict === 'RELIABLE' ? '✅ Strategy appears ROBUST' : '⚠️ Strategy may be OVERFIT'} — 
+                        Profitable in ${d.robust_windows}/${d.total_windows} out-of-sample windows (${d.robust_pct}%)
+                        <br><span style="font-size:0.85rem;font-weight:400;margin-top:4px;display:block;">${d.explanation}</span>
+                    </div>
+                `;
+                
+                // Windows table
+                document.getElementById('windowBody').innerHTML = d.windows.map(w => `
+                    <tr>
+                        <td><strong>#${w.window}</strong></td>
+                        <td>${w.train_period}</td>
+                        <td>${w.test_period}</td>
+                        <td class="${w.train_return >= 0 ? 'up' : 'down'}">${w.train_return >= 0 ? '+' : ''}${w.train_return}%</td>
+                        <td class="${w.test_return >= 0 ? 'up' : 'down'}">${w.test_return >= 0 ? '+' : ''}${w.test_return}%</td>
+                        <td>${w.train_sharpe.toFixed(2)}</td>
+                        <td>${w.test_sharpe.toFixed(2)}</td>
+                        <td><span class="badge ${w.robust ? 'badge-pass' : 'badge-fail'}">${w.robust ? 'PASS' : 'FAIL'}</span></td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({behavior:'smooth'});
+            } catch(e) { alert('Error'); }
+            finally { document.getElementById('loader').classList.remove('active'); }
+        }
+    </script>
+</body>
+</html>

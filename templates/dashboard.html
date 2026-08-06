@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtest | NEPSE QuantFlow</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 8px; align-items: center; overflow-x: auto; }
+        .topbar .nav-links a {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.83rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s; white-space: nowrap;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        .topbar .user-info img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; }
+        
+        .main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+        
+        .controls {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; align-items: end;
+        }
+        .field label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 5px; }
+        .field input, .field select {
+            width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; background: #f8fafc;
+        }
+        .field input:focus, .field select:focus { outline: none; border-color: #dc2626; background: #fff; }
+        .btn {
+            padding: 10px 16px; border: none; border-radius: 10px; font-weight: 600;
+            font-size: 0.85rem; cursor: pointer; font-family: inherit; transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-run { background: #dc2626; color: #fff; width: 100%; }
+        .btn-run:hover { background: #b91c1c; }
+        .btn-run:disabled { opacity: 0.5; cursor: wait; }
+        .btn-outline { background: #fff; border: 1.5px solid #e2e8f0; color: #475569; }
+        .btn-outline:hover { border-color: #cbd5e1; }
+        .btn-dark { background: #0f172a; color: #fff; }
+        .btn-dark:hover { background: #1e293b; }
+        
+        .metrics {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px; margin-bottom: 18px;
+        }
+        .mcard {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 20px; position: relative; overflow: hidden;
+        }
+        .mcard::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .mcard:nth-child(1)::before { background: #dc2626; }
+        .mcard:nth-child(2)::before { background: #2563eb; }
+        .mcard:nth-child(3)::before { background: #ef4444; }
+        .mcard:nth-child(4)::before { background: #f59e0b; }
+        .mcard:nth-child(5)::before { background: #10b981; }
+        .mval { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+        .mlab { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+        .up { color: #10b981; } .down { color: #ef4444; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 14px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        .badge-buy { background: #ecfdf5; color: #059669; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.75rem; }
+        .badge-sell { background: #fef2f2; color: #dc2626; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.75rem; }
+        
+        #loader-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(248,250,252,0.8);
+            z-index: 99; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        #loader-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #dc2626; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        #results { display: none; }
+        #empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        
+        @media (max-width: 768px) { .controls { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div id="loader-overlay"><div style="text-align:center;"><div class="spinner"></div><p style="margin-top:12px;color:#64748b;">Running NEPSE simulation...</p></div></div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard" class="active">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer">⚡ Optimizer</a>
+            <a href="/walkforward">🔮 Walk-Forward</a>
+            <a href="/builder">🧩 Builder</a>
+            <a href="/portfolio">💼 Portfolio</a>
+            <a href="/alerts">🔔 Alerts</a>
+            <a href="/tutorial">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <div class="controls">
+                <div class="field"><label>Stock</label>
+                    <select id="symbol">{% for stock in stocks %}<option value="{{ stock.symbol }}">{{ stock.symbol }}</option>{% endfor %}</select>
+                </div>
+                <div class="field"><label>Strategy</label>
+                    <select id="strategy">
+                        <option value="ma_crossover">MA Crossover</option>
+                        <option value="rsi">RSI</option>
+                        <option value="bollinger">Bollinger Bands</option>
+                        <option value="buy_hold">Buy & Hold</option>
+                    </select>
+                </div>
+                <div class="field"><label>Start</label><input type="date" id="start_date" value="2020-01-01"></div>
+                <div class="field"><label>End</label><input type="date" id="end_date" value="2026-07-16"></div>
+                <div class="field"><label>Capital (NPR)</label><input type="number" id="capital" value="100000"></div>
+                <div class="field"><label>Fast MA</label><input type="number" id="fast_ma" value="20"></div>
+                <div class="field"><label>Slow MA</label><input type="number" id="slow_ma" value="50"></div>
+                <div class="field"><label>&nbsp;</label>
+                    <button class="btn btn-run" onclick="runSingle()">⚡ Run</button>
+                </div>
+                <div class="field"><label>&nbsp;</label>
+                    <button class="btn btn-dark" onclick="runCompare()" style="width:100%;">📊 Compare All</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="results">
+            <div class="action-row">
+                <button class="btn btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+                <button class="btn btn-outline" onclick="exportPDF()">📄 Export PDF</button>
+            </div>
+            <div class="metrics">
+                <div class="mcard"><div class="mval" id="mRet">--</div><div class="mlab">Total Return</div></div>
+                <div class="mcard"><div class="mval" id="mSharpe">--</div><div class="mlab">Sharpe Ratio</div></div>
+                <div class="mcard"><div class="mval down" id="mDD">--</div><div class="mlab">Max Drawdown</div></div>
+                <div class="mcard"><div class="mval" id="mWR">--</div><div class="mlab">Win Rate</div></div>
+                <div class="mcard"><div class="mval" id="mTrades">--</div><div class="mlab">Total Trades</div></div>
+            </div>
+            <div class="card"><canvas id="chart" style="width:100%;height:350px;"></canvas></div>
+            <div class="card">
+                <table><thead><tr><th>Date</th><th>Action</th><th>Qty</th><th>Price (NPR)</th></tr></thead>
+                <tbody id="tradesBody"></tbody></table>
+            </div>
+        </div>
+
+        <div id="empty">
+            <div style="text-align:center;padding:60px;color:#94a3b8;">
+                <div style="font-size:3rem;">📈</div>
+                <p>Select parameters and click <strong>Run</strong> or <strong>Compare All</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let lastResult = null;
+
+        async function runSingle() {
+            document.getElementById('loader-overlay').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('empty').style.display = 'none';
+
+            try {
+                const r = await fetch('/api/backtest', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        symbol: document.getElementById('symbol').value,
+                        strategy: document.getElementById('strategy').value,
+                        start_date: document.getElementById('start_date').value,
+                        end_date: document.getElementById('end_date').value,
+                        capital: document.getElementById('capital').value,
+                        fast_ma: document.getElementById('fast_ma').value,
+                        slow_ma: document.getElementById('slow_ma').value,
+                        rsi_period: 14, rsi_oversold: 35, rsi_overbought: 65,
+                        bb_period: 20, bb_std: 2.0
+                    })
+                });
+                const j = await r.json();
+                if (!j.ok) { alert(j.error); return; }
+                lastResult = j.data;
+                render(j.data);
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({behavior:'smooth'});
+            } catch(e) { alert('Error'); }
+            finally { document.getElementById('loader-overlay').classList.remove('active'); }
+        }
+
+        async function runCompare() {
+            document.getElementById('loader-overlay').classList.add('active');
+            try {
+                const r = await fetch('/api/compare', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        symbol: document.getElementById('symbol').value,
+                        start_date: document.getElementById('start_date').value,
+                        end_date: document.getElementById('end_date').value,
+                        capital: document.getElementById('capital').value
+                    })
+                });
+                const j = await r.json();
+                if (!j.ok) { alert(j.error); return; }
+                
+                lastResult = j.results[0];
+                render(j.results[0]);
+                
+                let compHTML = '<div class="card" style="margin-top:16px;"><h3 style="margin-bottom:12px;">📊 Strategy Comparison</h3><table><thead><tr><th>Strategy</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Win Rate</th><th>Trades</th></tr></thead><tbody>';
+                j.results.forEach((r, i) => {
+                    compHTML += `<tr style="${i===0 ? 'background:#fef2f2;' : ''}">
+                        <td><strong>${r.strategy}</strong></td>
+                        <td class="${r.total_return >= 0 ? 'up' : 'down'}">${r.total_return >= 0 ? '+' : ''}${r.total_return}%</td>
+                        <td>${r.sharpe_ratio.toFixed(2)}</td>
+                        <td>${r.max_drawdown}%</td>
+                        <td>${r.win_rate}%</td>
+                        <td>${r.total_trades}</td>
+                    </tr>`;
+                });
+                compHTML += '</tbody></table></div>';
+                
+                document.getElementById('results').insertAdjacentHTML('beforeend', compHTML);
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('empty').style.display = 'none';
+                document.getElementById('results').scrollIntoView({behavior:'smooth'});
+            } catch(e) { alert('Error'); }
+            finally { document.getElementById('loader-overlay').classList.remove('active'); }
+        }
+
+        function render(d) {
+            document.getElementById('mRet').textContent = (d.total_return >= 0 ? '+' : '') + d.total_return + '%';
+            document.getElementById('mRet').className = 'mval ' + (d.total_return >= 0 ? 'up' : 'down');
+            document.getElementById('mSharpe').textContent = d.sharpe_ratio.toFixed(2);
+            document.getElementById('mDD').textContent = d.max_drawdown + '%';
+            document.getElementById('mWR').textContent = d.win_rate + '%';
+            document.getElementById('mTrades').textContent = d.total_trades;
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            if (chart) chart.destroy();
+            const grad = ctx.createLinearGradient(0,0,0,350);
+            grad.addColorStop(0, 'rgba(220,38,38,0.12)');
+            grad.addColorStop(1, 'rgba(220,38,38,0)');
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: d.equity_curve.map(p => p.date),
+                    datasets: [
+                        { label: 'Portfolio', data: d.equity_curve.map(p => p.equity), borderColor: '#dc2626', backgroundColor: grad, fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                        { label: 'Initial', data: d.equity_curve.map(() => d.initial_capital), borderColor: '#94a3b8', borderDash: [6,4], pointRadius: 0, borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { usePointStyle: true, padding: 20, color: '#64748b', font: {size:11} } } },
+                    scales: {
+                        x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                        y: { ticks: { callback: v => 'NPR ' + v.toLocaleString(), color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+
+            document.getElementById('tradesBody').innerHTML = d.trades.map(t =>
+                `<tr><td>${t.date}</td><td><span class="badge-${t.action.toLowerCase()}">${t.action}</span></td><td>${t.shares}</td><td>NPR ${t.price.toLocaleString()}</td></tr>`
+            ).join('');
+        }
+
+        async function exportCSV() {
+            if (!lastResult) return alert('Run a backtest first');
+            const r = await fetch('/api/export/csv', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({trades: lastResult.trades})
+            });
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'trades.csv'; a.click();
+        }
+
+        async function exportPDF() {
+            if (!lastResult) return alert('Run a backtest first');
+            const r = await fetch('/api/export/pdf', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    symbol: document.getElementById('symbol').value,
+                    strategy: lastResult.strategy,
+                    start: document.getElementById('start_date').value,
+                    end: document.getElementById('end_date').value,
+                    metrics: {
+                        'Total Return': lastResult.total_return + '%',
+                        'Sharpe Ratio': lastResult.sharpe_ratio,
+                        'Max Drawdown': lastResult.max_drawdown + '%',
+                        'Win Rate': lastResult.win_rate + '%',
+                        'Total Trades': lastResult.total_trades,
+                        'Final Equity': 'NPR ' + lastResult.final_equity.toLocaleString()
+                    }
+                })
+            });
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'report.pdf'; a.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Optimizer | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 8px; align-items: center; }
+        .topbar .nav-links a {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.83rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        .topbar .user-info img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; }
+        
+        .main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 800; }
+        .page-header p { color: #64748b; font-size: 0.9rem; }
+        
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+        
+        .controls {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px; align-items: end;
+        }
+        .field label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 5px; }
+        .field input, .field select {
+            width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-family: inherit; font-size: 0.88rem; background: #f8fafc;
+        }
+        .field input:focus, .field select:focus { outline: none; border-color: #dc2626; background: #fff; }
+        .btn {
+            padding: 11px 18px; border: none; border-radius: 10px; font-weight: 600;
+            font-size: 0.88rem; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .btn-primary { background: #dc2626; color: #fff; width: 100%; }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 14px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        tr:hover td { background: #f8fafc; }
+        tr.best td { background: #fef2f2; font-weight: 600; }
+        
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+        .badge-best { background: #dc2626; color: #fff; }
+        
+        .loading-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(248,250,252,0.8);
+            z-index: 99; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #dc2626; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        #results { display: none; }
+        .text-up { color: #10b981; }
+        .text-down { color: #ef4444; }
+        
+        @media (max-width: 768px) { .controls { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="loading-overlay" id="loader">
+        <div style="text-align:center;">
+            <div class="spinner"></div>
+            <p style="margin-top:12px;color:#64748b;">Testing parameter combinations...</p>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer" class="active">⚡ Optimizer</a>
+            <a href="/walkforward">🔮 Walk-Forward</a>
+            <a href="/builder">🧩 Builder</a>
+            <a href="/portfolio">💼 Portfolio</a>
+            <a href="/alerts">🔔 Alerts</a>
+            <a href="/tutorial">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>⚡ Strategy Optimizer</h1>
+            <p>Automatically test multiple parameter combinations to find the best settings for your chosen strategy.</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="card">
+            <div class="controls">
+                <div class="field">
+                    <label>Stock</label>
+                    <select id="symbol">
+                        {% for stock in stocks %}
+                        <option value="{{ stock.symbol }}">{{ stock.symbol }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Strategy</label>
+                    <select id="strategy">
+                        <option value="ma_crossover">MA Crossover</option>
+                        <option value="rsi">RSI</option>
+                        <option value="bollinger">Bollinger Bands</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Start Date</label>
+                    <input type="date" id="start_date" value="2020-01-01">
+                </div>
+                <div class="field">
+                    <label>End Date</label>
+                    <input type="date" id="end_date" value="2026-07-16">
+                </div>
+                <div class="field">
+                    <label>Capital (NPR)</label>
+                    <input type="number" id="capital" value="100000">
+                </div>
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="runOptimizer()">🔍 Find Best Parameters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.85rem;color:#991b1b;">
+            <strong>⚡ How it works:</strong> The optimizer runs your strategy with many different parameter combinations and ranks them by <strong>Sharpe Ratio</strong> (risk-adjusted return). The best parameters are shown first.
+        </div>
+
+        <!-- Results -->
+        <div id="results">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="font-size:1.1rem;font-weight:700;">📊 Optimization Results</h3>
+                    <span id="testedCount" style="font-size:0.85rem;color:#64748b;"></span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th><th>Parameters</th><th>Return</th>
+                                <th>Sharpe</th><th>Max DD</th><th>Win Rate</th><th>Trades</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runOptimizer() {
+            document.getElementById('loader').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/optimize', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        symbol: document.getElementById('symbol').value,
+                        strategy: document.getElementById('strategy').value,
+                        start_date: document.getElementById('start_date').value,
+                        end_date: document.getElementById('end_date').value,
+                        capital: document.getElementById('capital').value
+                    })
+                });
+                const json = await resp.json();
+                if (!json.ok) { alert('Error: ' + json.error); return; }
+
+                document.getElementById('testedCount').textContent = `Tested ${json.total_tested} combinations`;
+                
+                document.getElementById('resultsBody').innerHTML = json.results.map((r, i) => `
+                    <tr class="${i === 0 ? 'best' : ''}">
+                        <td>
+                            ${i === 0 ? '<span class="badge badge-best">BEST</span>' : `#${i + 1}`}
+                        </td>
+                        <td><strong>${r.params}</strong></td>
+                        <td class="${r.total_return >= 0 ? 'text-up' : 'text-down'}">${r.total_return >= 0 ? '+' : ''}${r.total_return}%</td>
+                        <td><strong>${r.sharpe_ratio.toFixed(2)}</strong></td>
+                        <td>${r.max_drawdown}%</td>
+                        <td>${r.win_rate}%</td>
+                        <td>${r.total_trades}</td>
+                    </tr>
+                `).join('');
+
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({behavior:'smooth'});
+
+            } catch(e) {
+                alert('Error connecting to server');
+            } finally {
+                document.getElementById('loader').classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

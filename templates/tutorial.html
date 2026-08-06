@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+        
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; margin-bottom: 40px; border-bottom: 1px solid #e2e8f0;
+        }
+        .topbar .logo { font-weight: 800; font-size: 1.2rem; }
+        .topbar .logo span { color: #dc2626; }
+        .btn-back {
+            padding: 8px 16px; background: #fff; border: 1.5px solid #e2e8f0;
+            border-radius: 8px; text-decoration: none; color: #475569;
+            font-weight: 500; font-size: 0.85rem; transition: all 0.2s;
+        }
+        .btn-back:hover { border-color: #cbd5e1; }
+        
+        h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+        .subtitle { color: #64748b; font-size: 1rem; margin-bottom: 40px; }
+        
+        .step {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+            padding: 32px; margin-bottom: 20px;
+            display: flex; gap: 24px; align-items: flex-start;
+        }
+        .step-num {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.2rem; flex-shrink: 0;
+            color: #fff;
+        }
+        .step:nth-child(1) .step-num { background: #dc2626; }
+        .step:nth-child(2) .step-num { background: #2563eb; }
+        .step:nth-child(3) .step-num { background: #059669; }
+        .step:nth-child(4) .step-num { background: #d97706; }
+        .step:nth-child(5) .step-num { background: #7c3aed; }
+        
+        .step h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .step p { color: #475569; font-size: 0.92rem; }
+        .step .highlight { 
+            background: #fef2f2; padding: 2px 8px; border-radius: 4px;
+            font-weight: 600; color: #dc2626; font-size: 0.85rem;
+        }
+        
+        .ready-box {
+            text-align: center; padding: 40px; background: #fff;
+            border: 1px solid #e2e8f0; border-radius: 16px; margin-top: 30px;
+        }
+        .ready-box h2 { font-size: 1.5rem; margin-bottom: 8px; }
+        .ready-box p { color: #64748b; margin-bottom: 20px; }
+        .btn-go {
+            display: inline-block; padding: 12px 28px;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff; text-decoration: none; border-radius: 10px;
+            font-weight: 600; font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <div class="logo">NEPSE <span>QuantFlow</span></div>
+            <a href="/dashboard" class="btn-back">← Dashboard</a>
+        </div>
+
+        <h1>📚 How It Works</h1>
+        <p class="subtitle">Learn to backtest trading strategies on the Nepal Stock Exchange.</p>
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <h3>Pick a NEPSE Stock</h3>
+                <p>Choose from <strong>50+ actively traded stocks</strong> listed on NEPSE — commercial banks, hydropower, insurance, microfinance, and more. You can also search by name or filter by sector.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div>
+                <h3>Set Your Date Range</h3>
+                <p>Select any period from <strong>2020 to July 2026</strong>. The longer the range, the more reliable your backtest results. Data covers pre-COVID, COVID crash, and recovery periods.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div>
+                <h3>Configure the Strategy</h3>
+                <p>The <strong>Moving Average Crossover</strong> strategy buys when the fast MA crosses above the slow MA, and sells on the opposite cross. Adjust the <span class="highlight">Fast MA</span> and <span class="highlight">Slow MA</span> windows to test different sensitivities.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">4</div>
+            <div>
+                <h3>Real NEPSE Costs Included</h3>
+                <p>Unlike basic simulators, NEPSE QuantFlow models <strong>actual Nepal market costs</strong>: <span class="highlight">0.4% broker commission</span>, <span class="highlight">0.015% SEBON fee</span>, and <span class="highlight">NPR 25 DP charge</span> per transaction. These small costs significantly impact profitability.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">5</div>
+            <div>
+                <h3>Analyze Results</h3>
+                <p>After running, you'll see: <strong>Total Return</strong>, <strong>Sharpe Ratio</strong> (risk-adjusted returns), <strong>Max Drawdown</strong> (worst loss), <strong>Win Rate</strong>, a full equity curve chart, and a complete trade-by-trade log.</p>
+            </div>
+        </div>
+
+        <div class="ready-box">
+            <h2>🇳🇵 Ready to Start?</h2>
+            <p>Head to the dashboard and run your first NEPSE backtest.</p>
+            <a href="/dashboard" class="btn-go">Go to Dashboard →</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            line-height: 1.7;
+        }
+        
+        /* Top bar */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 28px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        .topbar .user-info img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 28px;
+            position: sticky;
+            top: 60px;
+            z-index: 49;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            transition: all 0.3s;
+        }
+        .progress-dot.active {
+            background: #dc2626;
+            width: 28px;
+            border-radius: 5px;
+        }
+        .progress-dot.done {
+            background: #dc2626;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        /* Main content */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        
+        .slide {
+            display: none;
+            animation: fadeSlide 0.4s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide .icon-big {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .slide h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .slide .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 32px;
+        }
+        
+        /* Info cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+        }
+        .info-card .card-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .info-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .info-card p {
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        /* Single column info */
+        .info-single {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .info-single h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .info-single p {
+            font-size: 0.88rem;
+            color: #475569;
+            line-height: 1.7;
+        }
+        .info-single ul {
+            list-style: none;
+            padding: 0;
+        }
+        .info-single ul li {
+            padding: 6px 0;
+            font-size: 0.88rem;
+            color: #475569;
+            padding-left: 20px;
+            position: relative;
+        }
+        .info-single ul li::before {
+            content: '•';
+            position: absolute;
+            left: 4px;
+            color: #dc2626;
+            font-weight: bold;
+        }
+        
+        .highlight-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.85rem;
+            color: #991b1b;
+        }
+        .highlight-box strong {
+            color: #dc2626;
+        }
+        
+        /* Term definition */
+        .term {
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #0f172a;
+        }
+        
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .btn {
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: #dc2626;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-secondary {
+            background: #fff;
+            color: #64748b;
+            border: 1.5px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #cbd5e1; }
+        .btn-dark {
+            background: #0f172a;
+            color: #fff;
+        }
+        .btn-dark:hover { background: #1e293b; }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .slide h1 { font-size: 1.5rem; }
+            .btn-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="user-info">
+            {% if user_picture %}
+            <img src="{{ user_picture }}" alt="Profile">
+            {% endif %}
+            <span>{{ user_name }}</span>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <div class="progress-steps" id="progressDots">
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
+        <div class="progress-text" id="progressText">1 of 6</div>
+    </div>
+
+    <!-- Slides -->
+    <div class="container">
+
+        <!-- SLIDE 1: Welcome -->
+        <div class="slide active" id="slide1">
+            <div class="icon-big">🇳🇵</div>
+            <h1>Welcome to NEPSE QuantFlow</h1>
+            <p class="subtitle">Nepal's first professional backtesting platform for the stock market.</p>
+            
+            <div class="info-single">
+                <h3>What is this platform?</h3>
+                <p>NEPSE QuantFlow lets you <strong>test trading strategies on historical Nepali stock data</strong> without risking a single rupee. It's like a flight simulator for stock trading — you practice with past data before trading with real money.</p>
+            </div>
+            
+            <div class="info-single">
+                <h3>What is <span class="term">NEPSE</span>?</h3>
+                <p><strong>NEPSE</strong> (Nepal Stock Exchange) is Nepal's only stock exchange, based in Kathmandu. Over 200 companies are listed here — banks, hydropower, insurance, manufacturing, and more. Trading happens Sunday to Thursday, 11 AM to 3 PM.</p>
+            </div>
+            
+            <div class="info-single">
+                <h3>What is <span class="term">Backtesting</span>?</h3>
+                <p>Backtesting is applying your trading rules to <strong>old market data</strong> to see if your strategy would have made money or lost money. If a strategy fails on past data, it will almost certainly fail in the future. Backtesting saves you from costly mistakes.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: How Trading Works -->
+        <div class="slide" id="slide2">
+            <div class="icon-big">📊</div>
+            <h1>How Stock Trading Works</h1>
+            <p class="subtitle">The absolute basics every trader must know.</p>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="card-icon">📈</div>
+                    <h4>Buying (Long Position)</h4>
+                    <p>You buy shares hoping the price will <strong>go up</strong>. If you buy at NPR 500 and sell at NPR 600, you profit NPR 100 per share.</p>
+                </div>
+                <div class="info-card">
+                    <div class="card-icon">📉</div>
+                    <h4>Selling / Exiting</h4>
+                    <p>When you sell your shares to exit a position. In Nepal, delivery-based trading means you must own shares to sell them.</p>
+                </div>
+                <div class="info-card">
+                    <div class="card-icon">💸</div>
+                    <h4>Broker Commission</h4>
+                    <p>Every time you buy or sell, your broker charges ~<strong>0.4%</strong> of the trade value. This adds up fast.</p>
+                </div>
+                <div class="info-card">
+                    <div class="card-icon">🏛️</div>
+                    <h4>SEBON & DP Fees</h4>
+                    <p>SEBON (regulator) takes <strong>0.015%</strong>. DP (Demat) charges <strong>NPR 25</strong> per transaction. These small costs kill small profits.</p>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>⚠️ Key Lesson:</strong> In Nepal, buying and selling one stock can cost ~1% in fees. Your strategy must make more than 1% just to break even.
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Moving Averages -->
+        <div class="slide" id="slide3">
+            <div class="icon-big">📐</div>
+            <h1>Moving Average Crossover Strategy</h1>
+            <p class="subtitle">The strategy you'll be testing on this platform.</p>
+            
+            <div class="info-single">
+                <h3>What is a <span class="term">Moving Average (MA)</span>?</h3>
+                <p>A moving average is simply the <strong>average closing price</strong> over a certain number of days. It smooths out daily price noise and shows the underlying trend.</p>
+                <ul>
+                    <li><strong>20-day MA</strong> = Average of last 20 days' closing prices (shows short-term trend)</li>
+                    <li><strong>50-day MA</strong> = Average of last 50 days' closing prices (shows medium-term trend)</li>
+                </ul>
+            </div>
+            
+            <div class="info-single">
+                <h3>How the Crossover Strategy Works</h3>
+                <p>There are two moving averages — a <strong>fast</strong> one and a <strong>slow</strong> one. When they cross, it signals a trend change:</p>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card" style="border-left: 4px solid #10b981;">
+                    <div class="card-icon">🟢</div>
+                    <h4>Golden Cross → BUY</h4>
+                    <p>When the <strong>fast MA crosses ABOVE</strong> the slow MA. This signals that prices are trending upward. The strategy buys shares.</p>
+                </div>
+                <div class="info-card" style="border-left: 4px solid #ef4444;">
+                    <div class="card-icon">🔴</div>
+                    <h4>Death Cross → SELL</h4>
+                    <p>When the <strong>fast MA crosses BELOW</strong> the slow MA. This signals that prices are trending downward. The strategy sells shares.</p>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>💡 Pro Tip:</strong> MA crossover is a <strong>trend-following</strong> strategy. It works best in strongly trending markets and poorly in sideways/choppy markets. There is no perfect strategy — backtesting helps you understand when it works and when it fails.
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Metrics Explained -->
+        <div class="slide" id="slide4">
+            <div class="icon-big">🎯</div>
+            <h1>Understanding the Results</h1>
+            <p class="subtitle">What each number on the dashboard actually means.</p>
+            
+            <div class="info-single">
+                <h3><span class="term">Total Return</span></h3>
+                <p>The percentage your capital grew (or shrank). If you started with NPR 1,00,000 and ended with NPR 1,15,000, your total return is <strong>+15%</strong>. Negative means you lost money.</p>
+            </div>
+            
+            <div class="info-single">
+                <h3><span class="term">Sharpe Ratio</span></h3>
+                <p>Measures <strong>return per unit of risk</strong>. Think of it as "how much reward did I get for the rollercoaster ride?"</p>
+                <ul>
+                    <li><strong>Above 1.0</strong> = Good (decent returns for the risk taken)</li>
+                    <li><strong>Above 2.0</strong> = Excellent</li>
+                    <li><strong>Below 0.5</strong> = Not worth the stress</li>
+                    <li><strong>Negative</strong> = You lost money while taking risk. Worst case.</li>
+                </ul>
+            </div>
+            
+            <div class="info-single">
+                <h3><span class="term">Max Drawdown</span></h3>
+                <p>The <strong>biggest drop</strong> from a peak to a trough. If your portfolio went from NPR 1,50,000 down to NPR 1,00,000, that's a <strong>-33% drawdown</strong>. It measures the maximum pain you'd have endured. Can you handle watching your money drop that much?</p>
+            </div>
+            
+            <div class="info-single">
+                <h3><span class="term">Win Rate</span></h3>
+                <p>Percentage of trades that were profitable. A 40% win rate can still be profitable if winners are bigger than losers. Don't judge a strategy by win rate alone.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: How to Use -->
+        <div class="slide" id="slide5">
+            <div class="icon-big">🖥️</div>
+            <h1>How to Use This Platform</h1>
+            <p class="subtitle">Step-by-step walkthrough of the dashboard.</p>
+            
+            <div class="info-single">
+                <h3>1. Pick a Stock</h3>
+                <p>Choose from <strong>50+ NEPSE stocks</strong> across banking, hydropower, insurance, microfinance, and other sectors. Each stock behaves differently.</p>
+            </div>
+            
+            <div class="info-single">
+                <h3>2. Set Date Range</h3>
+                <p>Select any period from <strong>2020 to 2026</strong>. Longer periods give more reliable results. Include both bull and bear markets to see how your strategy handles different conditions.</p>
+            </div>
+            
+            <div class="info-single">
+                <h3>3. Adjust MA Windows</h3>
+                <p>Change the <strong>Fast MA</strong> (default 20) and <strong>Slow MA</strong> (default 50). Try different combinations:</p>
+                <ul>
+                    <li><strong>5/20</strong> — Very sensitive, more trades, higher costs</li>
+                    <li><strong>20/50</strong> — Balanced, moderate trades</li>
+                    <li><strong>50/200</strong> — Slow, fewer trades, long-term trend</li>
+                </ul>
+            </div>
+            
+            <div class="info-single">
+                <h3>4. Run & Analyze</h3>
+                <p>Click <strong>Run Backtest</strong>. You'll see your equity curve (how your money grew), all metrics, and every buy/sell trade with exact dates and prices.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Ready -->
+        <div class="slide" id="slide6">
+            <div class="icon-big">🚀</div>
+            <h1>You're Ready!</h1>
+            <p class="subtitle">Here's what to remember before you start.</p>
+            
+            <div class="info-single">
+                <h3>⚠️ Critical Warnings</h3>
+                <ul>
+                    <li><strong>Past performance ≠ future results.</strong> A strategy that worked from 2020-2024 may fail tomorrow.</li>
+                    <li><strong>Transaction costs matter.</strong> NEPSE fees are high. A "profitable" strategy before costs may lose money after costs.</li>
+                    <li><strong>This is a learning tool, not financial advice.</strong> Never trade real money based solely on a backtest.</li>
+                    <li><strong>Start small.</strong> If you ever trade real money, begin with amounts you can afford to lose completely.</li>
+                </ul>
+            </div>
+            
+            <div class="info-single" style="background: #f0fdf4; border-color: #bbf7d0;">
+                <h3 style="color: #166534;">✅ What You'll Learn</h3>
+                <ul>
+                    <li>How to test ideas before risking money</li>
+                    <li>How moving averages work in real markets</li>
+                    <li>Why costs matter more than you think</li>
+                    <li>How to read Sharpe ratio, drawdown, and win rate</li>
+                    <li>The discipline of systematic, emotion-free trading</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-row">
+            <button class="btn btn-secondary" id="btnSkip" onclick="skipOnboarding()">Skip Tutorial</button>
+            <button class="btn btn-secondary" id="btnPrev" onclick="prevSlide()" style="display:none;">← Previous</button>
+            <button class="btn btn-primary" id="btnNext" onclick="nextSlide()">Next →</button>
+            <button class="btn btn-dark" id="btnFinish" onclick="finishOnboarding()" style="display:none;">🚀 Go to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_SLIDES = 6;
+        let currentSlide = 1;
+
+        function updateUI() {
+            // Update slides
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.toggle('active', i + 1 === currentSlide);
+            });
+
+            // Update progress dots
+            const dots = document.querySelectorAll('#progressDots .progress-dot');
+            dots.forEach((d, i) => {
+                d.classList.remove('active', 'done');
+                if (i + 1 < currentSlide) d.classList.add('done');
+                if (i + 1 === currentSlide) d.classList.add('active');
+            });
+
+            // Update progress text
+            document.getElementById('progressText').textContent = `${currentSlide} of ${TOTAL_SLIDES}`;
+
+            // Update buttons
+            document.getElementById('btnPrev').style.display = currentSlide > 1 ? 'inline-block' : 'none';
+            document.getElementById('btnNext').style.display = currentSlide < TOTAL_SLIDES ? 'inline-block' : 'none';
+            document.getElementById('btnFinish').style.display = currentSlide === TOTAL_SLIDES ? 'inline-block' : 'none';
+            document.getElementById('btnSkip').style.display = currentSlide === TOTAL_SLIDES ? 'none' : 'inline-block';
+        }
+
+        function nextSlide() {
+            if (currentSlide < TOTAL_SLIDES) {
+                currentSlide++;
+                updateUI();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateUI();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        async function finishOnboarding() {
+            await fetch('/onboarding/complete', { method: 'POST' });
+            window.location.href = '/dashboard';
+        }
+
+        async function skipOnboarding() {
+            await fetch('/onboarding/skip', { method: 'POST' });
+            window.location.href = '/dashboard';
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>

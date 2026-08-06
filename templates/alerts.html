@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 6px; align-items: center; overflow-x: auto; }
+        .topbar .nav-links a {
+            padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s; white-space: nowrap;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        .topbar .user-info img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; }
+        
+        .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 800; }
+        .page-header p { color: #64748b; font-size: 0.9rem; }
+        
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+        
+        .btn {
+            padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; font-family: inherit; border: none; transition: all 0.2s;
+        }
+        .btn-primary { background: #dc2626; color: #fff; }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-outline { background: #fff; border: 1.5px solid #e2e8f0; color: #475569; }
+        .btn-outline:hover { border-color: #cbd5e1; }
+        .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+        
+        .alert-card {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; transition: all 0.2s;
+        }
+        .alert-card.inactive { opacity: 0.5; }
+        .alert-card .alert-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .alert-card .alert-symbol { font-weight: 700; font-size: 1rem; }
+        .alert-card .alert-strategy { font-size: 0.85rem; color: #64748b; }
+        .alert-card .alert-type { font-size: 0.78rem; }
+        
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+        .form-row select { padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.85rem; background: #f8fafc; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 12px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+        .badge-buy { background: #ecfdf5; color: #059669; }
+        .badge-sell { background: #fef2f2; color: #dc2626; }
+        .badge-active { background: #ecfdf5; color: #059669; }
+        .badge-paused { background: #fefce8; color: #d97706; }
+        
+        @media (max-width: 768px) {
+            .topbar .nav-links a { padding: 6px 8px; font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer">⚡ Optimizer</a>
+            <a href="/walkforward">🔮 Walk-Forward</a>
+            <a href="/builder">🧩 Builder</a>
+            <a href="/portfolio">💼 Portfolio</a>
+            <a href="/alerts" class="active">🔔 Alerts</a>
+            <a href="/learn">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>🔔 Alerts & Signals</h1>
+            <p>Set up alerts for when strategies generate BUY/SELL signals. Get notified when conditions are met.</p>
+        </div>
+
+        <!-- Create Alert -->
+        <div class="card">
+            <h3 style="margin-bottom:14px;">Create New Alert</h3>
+            <div class="form-row">
+                <select id="alertSymbol">{% for s in stocks %}<option value="{{ s.symbol }}">{{ s.symbol }}</option>{% endfor %}</select>
+                <select id="alertStrategy">
+                    <option value="ma_crossover">MA Crossover (20/50)</option>
+                    <option value="rsi">RSI (14, 35/65)</option>
+                    <option value="bollinger">Bollinger Bands (20, 2σ)</option>
+                </select>
+                <select id="alertType">
+                    <option value="both">BUY & SELL</option>
+                    <option value="buy">BUY Only</option>
+                    <option value="sell">SELL Only</option>
+                </select>
+                <button class="btn btn-primary" onclick="createAlert()">+ Create Alert</button>
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="card">
+            <h3 style="margin-bottom:14px;">Active Alerts</h3>
+            <div id="activeAlerts"><p style="color:#94a3b8;">No active alerts. Create one above.</p></div>
+        </div>
+
+        <!-- Alert History -->
+        <div class="card">
+            <h3 style="margin-bottom:14px;">📋 Alert History</h3>
+            <table><thead><tr><th>Time</th><th>Stock</th><th>Signal</th><th>Price</th><th>Strategy</th></tr></thead>
+            <tbody id="historyBody"><tr><td colspan="5" style="color:#94a3b8;">No alerts triggered yet.</td></tr></tbody></table>
+        </div>
+    </div>
+
+    <script>
+        async function loadAlerts() {
+            const resp = await fetch('/api/alerts');
+            const data = await resp.json();
+            if (!data.ok) return;
+            
+            const activeDiv = document.getElementById('activeAlerts');
+            if (data.active.length === 0) {
+                activeDiv.innerHTML = '<p style="color:#94a3b8;">No active alerts.</p>';
+            } else {
+                activeDiv.innerHTML = data.active.map(a => `
+                    <div class="alert-card ${a.active ? '' : 'inactive'}">
+                        <div class="alert-info">
+                            <span class="alert-symbol">${a.symbol}</span>
+                            <span class="alert-strategy">${a.strategy_type}</span>
+                            <span class="alert-type">
+                                <span class="badge ${a.active ? 'badge-active' : 'badge-paused'}">${a.active ? 'Active' : 'Paused'}</span>
+                                ${a.alert_type === 'both' ? '<span class="badge badge-buy">BUY</span> <span class="badge badge-sell">SELL</span>' : 
+                                  a.alert_type === 'buy' ? '<span class="badge badge-buy">BUY</span>' : '<span class="badge badge-sell">SELL</span>'}
+                            </span>
+                            <span style="font-size:0.78rem;color:#94a3b8;">Triggered: ${a.trigger_count}x</span>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-outline btn-sm" onclick="toggleAlert('${a.id}')">${a.active ? 'Pause' : 'Resume'}</button>
+                            <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;" onclick="deleteAlert('${a.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            const historyBody = document.getElementById('historyBody');
+            if (data.history.length === 0) {
+                historyBody.innerHTML = '<tr><td colspan="5" style="color:#94a3b8;">No alerts triggered yet.</td></tr>';
+            } else {
+                historyBody.innerHTML = data.history.map(h => `
+                    <tr>
+                        <td>${h.timestamp}</td>
+                        <td><strong>${h.symbol}</strong></td>
+                        <td><span class="badge badge-${h.signal_type.toLowerCase()}">${h.signal_type}</span></td>
+                        <td>NPR ${h.price.toLocaleString()}</td>
+                        <td>${h.strategy}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function createAlert() {
+            await fetch('/api/alerts', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    action: 'create',
+                    symbol: document.getElementById('alertSymbol').value,
+                    strategy_type: document.getElementById('alertStrategy').value,
+                    alert_type: document.getElementById('alertType').value,
+                    params: {}
+                })
+            });
+            loadAlerts();
+        }
+
+        async function toggleAlert(id) {
+            await fetch('/api/alerts', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'toggle', alert_id: id})
+            });
+            loadAlerts();
+        }
+
+        async function deleteAlert(id) {
+            if (!confirm('Delete this alert?')) return;
+            await fetch('/api/alerts', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({alert_id: id})
+            });
+            loadAlerts();
+        }
+
+        loadAlerts();
+    </script>
+</body>
+</html>

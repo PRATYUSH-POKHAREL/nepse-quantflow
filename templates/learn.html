@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Center | NEPSE QuantFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.7; }
+        
+        .topbar {
+            background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; }
+        .topbar .brand span { color: #dc2626; }
+        .topbar .nav-links { display: flex; gap: 8px; align-items: center; }
+        .topbar .nav-links a {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.83rem; font-weight: 500;
+            color: #475569; text-decoration: none; transition: all 0.2s;
+        }
+        .topbar .nav-links a:hover { background: #f1f5f9; }
+        .topbar .nav-links a.active { background: #fef2f2; color: #dc2626; font-weight: 600; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; }
+        
+        .layout { max-width: 1280px; margin: 0 auto; padding: 24px; display: flex; gap: 24px; }
+        .sidebar {
+            width: 260px; flex-shrink: 0; position: sticky; top: 84px;
+            height: fit-content;
+        }
+        .sidebar .nav-card {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;
+        }
+        .sidebar a {
+            display: block; padding: 12px 18px; color: #475569; text-decoration: none;
+            font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; transition: all 0.2s;
+            font-weight: 500;
+        }
+        .sidebar a:hover { background: #f8fafc; color: #0f172a; }
+        .sidebar a.active { background: #fef2f2; color: #dc2626; font-weight: 600; border-left: 3px solid #dc2626; }
+        .sidebar a:last-child { border-bottom: none; }
+        
+        .content { flex: 1; min-width: 0; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+        .card h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px; }
+        .card h3 { font-size: 1.1rem; font-weight: 700; margin: 20px 0 8px; }
+        .card p { color: #475569; font-size: 0.9rem; margin-bottom: 12px; }
+        .card ul { padding-left: 20px; color: #475569; font-size: 0.9rem; }
+        .card ul li { margin-bottom: 6px; }
+        
+        .definition {
+            background: #f1f5f9; border-left: 4px solid #dc2626;
+            padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0;
+        }
+        .definition .term { font-weight: 700; font-size: 0.95rem; color: #dc2626; }
+        .definition .desc { font-size: 0.85rem; color: #475569; margin-top: 4px; }
+        
+        .tip-box {
+            background: #fefce8; border: 1px solid #fde68a; border-radius: 10px;
+            padding: 14px 18px; margin: 16px 0; font-size: 0.85rem;
+        }
+        .warning-box {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+            padding: 14px 18px; margin: 16px 0; font-size: 0.85rem;
+        }
+        
+        .glossary-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { text-align: left; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; position: static; }
+            .glossary-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="brand">🇳🇵 NEPSE <span>QuantFlow</span></div>
+        <div class="nav-links">
+            <a href="/market">📊 Market</a>
+            <a href="/dashboard">🔬 Backtest</a>
+            <a href="/compare">🔄 Compare</a>
+            <a href="/optimizer">⚡ Optimizer</a>
+            <a href="/learn" class="active">📚 Learn</a>
+        </div>
+        <div class="user-info">
+            {% if user_picture %}<img src="{{ user_picture }}" alt="Profile" style="width:28px;height:28px;border-radius:50%;">{% endif %}
+            <span>{{ user_name }}</span>
+            <a href="/logout" style="color:#94a3b8;text-decoration:none;font-size:0.8rem;margin-left:8px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="nav-card">
+                <a href="/learn?topic=glossary" class="{{ 'active' if topic == 'glossary' }}">📖 Glossary</a>
+                <a href="/learn?topic=strategies" class="{{ 'active' if topic == 'strategies' }}">📐 Strategy Guides</a>
+                <a href="/learn?topic=metrics" class="{{ 'active' if topic == 'metrics' }}">📊 Understanding Metrics</a>
+                <a href="/learn?topic=risks" class="{{ 'active' if topic == 'risks' }}">⚠️ Risk Management</a>
+                <a href="/learn?topic=mistakes" class="{{ 'active' if topic == 'mistakes' }}">❌ Common Mistakes</a>
+                <a href="/learn?topic=nepse" class="{{ 'active' if topic == 'nepse' }}">🇳🇵 About NEPSE</a>
+                <a href="/learn?topic=faq" class="{{ 'active' if topic == 'faq' }}">❓ FAQ</a>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            
+            {% if topic == 'glossary' or topic == 'overview' %}
+            <div class="card">
+                <h2>📖 Quantitative Finance Glossary</h2>
+                <p>Every term you'll encounter in backtesting and quantitative trading, explained simply.</p>
+                
+                <div class="glossary-grid">
+                    <div class="definition"><div class="term">Sharpe Ratio</div><div class="desc">Measures return per unit of risk. Higher = better risk-adjusted returns. Above 1.0 is good, above 2.0 is excellent.</div></div>
+                    <div class="definition"><div class="term">Max Drawdown</div><div class="desc">The largest peak-to-trough drop in your portfolio. A 30% drawdown means you lost 30% from your highest point.</div></div>
+                    <div class="definition"><div class="term">Win Rate</div><div class="desc">Percentage of trades that were profitable. A 40% win rate can still be profitable if winners are bigger than losers.</div></div>
+                    <div class="definition"><div class="term">Moving Average (MA)</div><div class="desc">Average closing price over a set period. Smooths noise and shows trend direction.</div></div>
+                    <div class="definition"><div class="term">Golden Cross</div><div class="desc">When a fast MA crosses above a slow MA. Bullish signal — BUY.</div></div>
+                    <div class="definition"><div class="term">Death Cross</div><div class="desc">When a fast MA crosses below a slow MA. Bearish signal — SELL.</div></div>
+                    <div class="definition"><div class="term">RSI (Relative Strength Index)</div><div class="desc">Momentum oscillator (0-100). Above 70 = overbought, below 30 = oversold.</div></div>
+                    <div class="definition"><div class="term">Bollinger Bands</div><div class="desc">Volatility bands around a moving average. Price at lower band = potentially oversold. At upper band = potentially overbought.</div></div>
+                    <div class="definition"><div class="term">Backtesting</div><div class="desc">Testing a strategy on historical data to see how it would have performed.</div></div>
+                    <div class="definition"><div class="term">Slippage</div><div class="desc">Difference between expected price and actual execution price. Larger orders = more slippage.</div></div>
+                    <div class="definition"><div class="term">Overfitting</div><div class="desc">When a strategy is too perfectly tuned to past data and fails on future data. The #1 enemy of quants.</div></div>
+                    <div class="definition"><div class="term">Beta</div><div class="desc">Measures a stock's volatility vs the market. Beta of 1 = moves with market, >1 = more volatile.</div></div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if topic == 'strategies' %}
+            <div class="card">
+                <h2>📐 Strategy Guides</h2>
+                
+                <h3>1. Moving Average Crossover</h3>
+                <p>The simplest trend-following strategy. Uses two moving averages — a fast one and a slow one. When the fast crosses above the slow, you buy. When it crosses below, you sell.</p>
+                <div class="tip-box">💡 <strong>Best for:</strong> Trending markets. <strong>Worst for:</strong> Sideways/choppy markets. Works well on NEPSE banking stocks during bull runs.</div>
+                
+                <h3>2. RSI (Relative Strength Index)</h3>
+                <p>Measures momentum on a 0-100 scale. Buy when RSI crosses above the oversold level (e.g., 35). Sell when it crosses below the overbought level (e.g., 65).</p>
+                <div class="tip-box">💡 <strong>Best for:</strong> Range-bound markets. <strong>Worst for:</strong> Strong trends (can give false signals). Try on NEPSE hydropower stocks.</div>
+                
+                <h3>3. Bollinger Bands</h3>
+                <p>Uses standard deviation to create bands around a moving average. Buy when price touches the lower band (oversold). Sell when price touches the upper band (overbought).</p>
+                <div class="tip-box">💡 <strong>Best for:</strong> Mean-reverting stocks. <strong>Worst for:</strong> Trending markets where price "walks the bands."</div>
+                
+                <h3>4. Buy & Hold</h3>
+                <p>Buy on day 1 and sell on the last day. This is your benchmark. If your strategy can't beat Buy & Hold after costs, it's not worth trading.</p>
+            </div>
+            {% endif %}
+
+            {% if topic == 'metrics' %}
+            <div class="card">
+                <h2>📊 Understanding Performance Metrics</h2>
+                
+                <h3>Total Return</h3>
+                <p>The percentage your money grew (or shrank). But raw return doesn't tell the full story — you need to know how much risk you took to get it.</p>
+                
+                <h3>Sharpe Ratio — The Most Important Number</h3>
+                <p>Return divided by risk. Think of it as "efficiency." A Sharpe of 2.0 means you got 2 units of return for every 1 unit of risk.</p>
+                <table>
+                    <tr><th>Sharpe Ratio</th><th>Rating</th></tr>
+                    <tr><td>Above 2.0</td><td style="color:#10b981;">🏆 Excellent</td></tr>
+                    <tr><td>1.0 - 2.0</td><td style="color:#2563eb;">✅ Good</td></tr>
+                    <tr><td>0.5 - 1.0</td><td style="color:#f59e0b;">⚠️ Acceptable</td></tr>
+                    <tr><td>Below 0.5</td><td style="color:#ef4444;">❌ Poor</td></tr>
+                    <tr><td>Negative</td><td style="color:#dc2626;">💀 Lost money</td></tr>
+                </table>
+                
+                <h3>Max Drawdown — The Pain Metric</h3>
+                <p>Could you handle watching NPR 1,50,000 become NPR 1,00,000? That's a 33% drawdown. Most people panic and sell at the bottom. Know your pain tolerance.</p>
+                
+                <h3>Win Rate — Don't Obsess Over It</h3>
+                <p>A strategy with 30% win rate can be extremely profitable if winners are 5x larger than losers. Focus on expectancy, not win rate.</p>
+            </div>
+            {% endif %}
+
+            {% if topic == 'risks' %}
+            <div class="card">
+                <h2>⚠️ Risk Management</h2>
+                
+                <div class="warning-box">🔴 <strong>Golden Rule:</strong> Never risk more than you can afford to lose. Backtesting is a learning tool, not a guarantee of future profits.</div>
+                
+                <h3>Position Sizing</h3>
+                <p>Don't put all your capital in one trade. In our backtester, we use 95% for simplicity, but real traders risk 1-5% per trade.</p>
+                
+                <h3>Transaction Costs in Nepal</h3>
+                <p>NEPSE costs are significant:</p>
+                <ul>
+                    <li>Broker commission: ~0.4% per trade</li>
+                    <li>SEBON fee: 0.015%</li>
+                    <li>DP charge: NPR 25 flat</li>
+                    <li><strong>Round-trip cost: ~0.8-1%</strong></li>
+                </ul>
+                <p>Your strategy must beat ~1% per trade just to break even. This kills most high-frequency strategies.</p>
+                
+                <h3>Market Risk</h3>
+                <p>NEPSE is small and can be volatile. Political events, liquidity crises, and regulatory changes can cause sudden moves that no backtest can predict.</p>
+            </div>
+            {% endif %}
+
+            {% if topic == 'mistakes' %}
+            <div class="card">
+                <h2>❌ Common Mistakes Beginners Make</h2>
+                
+                <div class="warning-box">1. <strong>Overfitting</strong> — Testing 1000 parameter combinations and picking the best one. It worked on past data but will fail on future data. Use the optimizer as a guide, not gospel.</div>
+                <div class="warning-box">2. <strong>Ignoring Transaction Costs</strong> — A strategy showing 15% returns might actually lose money after NEPSE fees. Always check if the strategy is profitable after costs.</div>
+                <div class="warning-box">3. <strong>Survivorship Bias</strong> — Testing only stocks that exist today. What about stocks that went bankrupt? They're not in your data, making results look better than reality.</div>
+                <div class="warning-box">4. <strong>Look-Ahead Bias</strong> — Accidentally using future data in your backtest. Our engine prevents this by feeding data bar-by-bar.</div>
+                <div class="warning-box">5. <strong>Ignoring Market Context</strong> — A strategy tested during a bull market (2020-2021) may fail in a bear market (2022-2023). Test across different market conditions.</div>
+            </div>
+            {% endif %}
+
+            {% if topic == 'nepse' %}
+            <div class="card">
+                <h2>🇳🇵 About NEPSE</h2>
+                <p><strong>Nepal Stock Exchange (NEPSE)</strong> is Nepal's only stock exchange, established in 1993 and operating from Kathmandu.</p>
+                
+                <h3>Key Facts</h3>
+                <ul>
+                    <li><strong>Trading Hours:</strong> Sunday to Thursday, 11:00 AM - 3:00 PM NPT</li>
+                    <li><strong>Listed Companies:</strong> 200+ across banking, hydropower, insurance, manufacturing, etc.</li>
+                    <li><strong>Circuit Breakers:</strong> ±10% for most stocks (stops trading if price moves beyond)</li>
+                    <li><strong>Settlement:</strong> T+2 (trade date + 2 days)</li>
+                    <li><strong>Regulator:</strong> SEBON (Securities Board of Nepal)</li>
+                </ul>
+                
+                <h3>Major Sectors</h3>
+                <table>
+                    <tr><th>Sector</th><th>Weight</th><th>Characteristics</th></tr>
+                    <tr><td>Commercial Banks</td><td>~50%</td><td>Largest sector, high liquidity, dividend-paying</td></tr>
+                    <tr><td>Hydropower</td><td>~15%</td><td>Growth-focused, volatile, popular with retail investors</td></tr>
+                    <tr><td>Insurance</td><td>~10%</td><td>Steady growth, lower volatility</td></tr>
+                    <tr><td>Microfinance</td><td>~8%</td><td>High growth, higher risk</td></tr>
+                    <tr><td>Manufacturing</td><td>~5%</td><td>Includes Unilever Nepal, Bottlers Nepal</td></tr>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if topic == 'faq' %}
+            <div class="card">
+                <h2>❓ Frequently Asked Questions</h2>
+                
+                <h3>Is this platform free?</h3>
+                <p>Yes. NEPSE QuantFlow is a free educational tool for learning quantitative trading.</p>
+                
+                <h3>Can I use these strategies with real money?</h3>
+                <p>This platform is for <strong>education only</strong>. Past performance does not guarantee future results. Always consult a financial advisor before investing real money.</p>
+                
+                <h3>Why does my strategy lose money after costs?</h3>
+                <p>NEPSE transaction costs (~1% round-trip) are high. Strategies that make many small trades get eaten by fees. Try longer holding periods.</p>
+                
+                <h3>Where does the data come from?</h3>
+                <p>We attempt to use Yahoo Finance for real NEPSE data. If unavailable, we generate realistic synthetic data for demonstration purposes.</p>
+                
+                <h3>What's the best strategy?</h3>
+                <p>There is no "best" strategy. Every strategy works in some market conditions and fails in others. The key is understanding <strong>when</strong> a strategy works and managing risk.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</body>
+</html>
